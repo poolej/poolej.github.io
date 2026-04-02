@@ -3,44 +3,70 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>NGA Cast Sender</title>
-    <link rel="stylesheet" href="./sender.css" />
-    <script
-      defer
-      src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"
-    ></script>
-    <script defer src="./artworks.js"></script>
-    <script defer src="./sender.js"></script>
+    <title>NGA Art Cast</title>
+    <link rel="stylesheet" href="./gallery.css" />
+    <script defer src="./gallery.js"></script>
   </head>
   <body>
-    <main class="sender-shell">
-      <section class="sender-panel">
-        <p class="eyebrow">Chromecast receiver launcher</p>
-        <h1>NGA Art Cast</h1>
-        <p class="body-copy">
-          Enter your registered Cast App ID, then launch the receiver and send
-          the current artwork to the TV.
-        </p>
+    <main class="screen">
+      <div class="artwork-frame">
+        <img id="artwork" class="artwork" alt="" />
+      </div>
 
-        <label class="field" for="app-id">Cast App ID</label>
-        <input id="app-id" class="input" value="YOUR_APP_ID" />
-
-        <div class="actions">
-          <button id="launch" class="button">Launch on TV</button>
-          <button id="send" class="button secondary">Send artwork</button>
+      <aside class="caption">
+        <div class="caption-content">
+          <p class="eyebrow" id="credit"></p>
+          <h1 id="title"></h1>
+          <p class="meta" id="meta"></p>
+          <p class="description" id="description"></p>
         </div>
-
-        <p class="helper">
-          Receiver URL for Google Cast registration:
-          <a href="https://johnwpoole.com/nga-cast/receiver.html">
-            https://johnwpoole.com/nga-cast/receiver.html
-          </a>
-        </p>
-
-        <p id="status" class="status">
-          Waiting for the Cast SDK and a receiver application ID.
-        </p>
-      </section>
+        <div class="caption-controls" aria-label="Slideshow controls">
+          <div class="filter-row">
+            <button
+              id="paintings-button"
+              class="control-button filter-button is-active"
+              type="button"
+              aria-label="Show paintings only"
+              title="Paintings only"
+            >
+              Paintings
+            </button>
+            <span class="filter-divider" aria-hidden="true">|</span>
+            <button
+              id="all-art-button"
+              class="control-button filter-button"
+              type="button"
+              aria-label="Show all art"
+              title="All art"
+            >
+              All Art
+            </button>
+          </div>
+          <div class="search-shell">
+            <input
+              id="artist-search"
+              class="artist-search"
+              type="text"
+              placeholder=""
+              aria-label="Filter artworks by artist"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <p id="search-count" class="search-count"></p>
+          </div>
+          <div class="transport-row">
+            <button id="prev-button" class="control-button" type="button" aria-label="Previous artwork">
+              &#9664;
+            </button>
+            <button id="pause-button" class="control-button" type="button" aria-label="Pause slideshow">
+              &#10074;&#10074;
+            </button>
+            <button id="next-button" class="control-button" type="button" aria-label="Next artwork">
+              &#9654;
+            </button>
+          </div>
+        </div>
+      </aside>
     </main>
   </body>
 </html>

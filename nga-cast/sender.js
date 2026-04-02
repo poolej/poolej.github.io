@@ -1,5 +1,12 @@
 const NAMESPACE = "urn:x-cast:com.poolej.ngaart";
-const DEFAULT_ARTWORK = window.NGA_ARTWORKS[0];
+const DEFAULT_ARTWORK = {
+  title: "Tropical Forest with Monkeys",
+  artist: "Henri Rousseau",
+  date: "1910",
+  imageUrl:
+    "https://api.nga.gov/iiif/95f1ff73-c4e9-45d4-ae3a-79837c4926d8/full/3840,/0/default.jpg",
+  credit: "National Gallery of Art Open Data",
+};
 
 let castReady = false;
 
