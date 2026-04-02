@@ -109,3 +109,8 @@ h1 {
 .status {
   margin-top: 1rem;
 }
+
+.debug {
+  color: rgba(247, 241, 230, 0.5);
+  font-size: 0.88rem;
+}
