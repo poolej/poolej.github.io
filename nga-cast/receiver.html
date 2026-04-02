@@ -7,24 +7,18 @@
     <link rel="stylesheet" href="./receiver.css" />
     <script
       defer
-      src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"
+      src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"
     ></script>
     <script defer src="./receiver.js"></script>
   </head>
   <body>
     <main class="receiver-screen">
-      <img
-        id="artwork"
-        class="receiver-artwork"
-        alt="Tropical Forest with Monkeys by Henri Rousseau"
-        src="https://api.nga.gov/iiif/95f1ff73-c4e9-45d4-ae3a-79837c4926d8/full/!1920,1080/0/default.jpg"
-      />
-      <div class="receiver-gradient"></div>
-      <section class="receiver-caption">
-        <p id="credit" class="receiver-credit">National Gallery of Art</p>
-        <h1 id="title">NGA Art Cast</h1>
-        <p id="meta" class="receiver-meta">Launching receiver...</p>
-        <p id="receiver-status" class="receiver-status">Waiting for Cast receiver startup.</p>
+      <section class="receiver-panel">
+        <p class="receiver-credit">National Gallery of Art</p>
+        <h1 class="receiver-title">Receiver Loaded</h1>
+        <p id="receiver-status" class="receiver-meta">
+          Waiting to start Cast receiver context.
+        </p>
       </section>
     </main>
   </body>
