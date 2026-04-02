@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NGA Cast Sender</title>
+    <link rel="stylesheet" href="./sender.css" />
+    <script
+      defer
+      src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"
+    ></script>
+    <script defer src="./artworks.js"></script>
+    <script defer src="./sender.js"></script>
+  </head>
+  <body>
+    <main class="sender-shell">
+      <section class="sender-panel">
+        <p class="eyebrow">Chromecast receiver launcher</p>
+        <h1>NGA Art Cast</h1>
+        <p class="body-copy">
+          Enter your registered Cast App ID, then launch the receiver and send
+          the current artwork to the TV.
+        </p>
+
+        <label class="field" for="app-id">Cast App ID</label>
+        <input id="app-id" class="input" value="YOUR_APP_ID" />
+
+        <div class="actions">
+          <button id="launch" class="button">Launch on TV</button>
+          <button id="send" class="button secondary">Send artwork</button>
+        </div>
+
+        <p class="helper">
+          Receiver URL for Google Cast registration:
+          <a href="https://johnwpoole.com/nga-cast/receiver.html">
+            https://johnwpoole.com/nga-cast/receiver.html
+          </a>
+        </p>
+
+        <p id="status" class="status">
+          Waiting for the Cast SDK and a receiver application ID.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

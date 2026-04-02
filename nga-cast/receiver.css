@@ -1,0 +1,80 @@
+:root {
+  color-scheme: dark;
+  --bg: #050607;
+  --text: #f6f2e8;
+  --muted: rgba(246, 242, 232, 0.78);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.receiver-screen {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(70, 93, 74, 0.28), transparent 35%),
+    linear-gradient(180deg, #101515 0%, #060708 100%);
+}
+
+.receiver-artwork {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #0b0d10;
+}
+
+.receiver-gradient {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 35%);
+  pointer-events: none;
+}
+
+.receiver-caption {
+  position: absolute;
+  left: 3vw;
+  right: 3vw;
+  bottom: 4vh;
+  max-width: 52rem;
+}
+
+.receiver-credit,
+.receiver-meta,
+#title {
+  margin: 0;
+}
+
+.receiver-credit {
+  margin-bottom: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+#title {
+  font-size: clamp(2.2rem, 4vw, 4.8rem);
+  line-height: 1.02;
+}
+
+.receiver-meta {
+  margin-top: 0.65rem;
+  font-size: clamp(1.05rem, 1.6vw, 1.6rem);
+  color: var(--muted);
+}

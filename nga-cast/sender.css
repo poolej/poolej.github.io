@@ -1,0 +1,111 @@
+:root {
+  color-scheme: dark;
+  --bg: #11151c;
+  --panel: #191f28;
+  --line: rgba(255, 255, 255, 0.12);
+  --text: #f7f1e6;
+  --muted: #cfbf9b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Georgia, "Times New Roman", serif;
+  background:
+    radial-gradient(circle at top, rgba(78, 116, 89, 0.24), transparent 30%),
+    linear-gradient(180deg, #14181d 0%, #0b0d11 100%);
+  color: var(--text);
+}
+
+.sender-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.sender-panel {
+  width: min(100%, 42rem);
+  padding: 2rem;
+  border: 1px solid var(--line);
+  background: rgba(25, 31, 40, 0.92);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+}
+
+.eyebrow,
+.body-copy,
+.status,
+.field,
+.helper {
+  margin: 0;
+}
+
+.eyebrow {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+}
+
+h1 {
+  margin: 0.6rem 0 1rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.body-copy,
+.helper,
+.status {
+  line-height: 1.5;
+  color: rgba(247, 241, 230, 0.82);
+}
+
+.helper {
+  margin-top: 1rem;
+}
+
+.helper a {
+  color: var(--text);
+}
+
+.field {
+  display: block;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--line);
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.button {
+  appearance: none;
+  border: 1px solid rgba(240, 231, 214, 0.3);
+  background: #2d4633;
+  color: var(--text);
+  padding: 0.85rem 1.2rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.button.secondary {
+  background: transparent;
+}
+
+.status {
+  margin-top: 1rem;
+}

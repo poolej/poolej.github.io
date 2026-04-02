@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NGA Cast Receiver</title>
+    <link rel="stylesheet" href="./receiver.css" />
+    <script
+      defer
+      src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"
+    ></script>
+    <script defer src="./artworks.js"></script>
+    <script defer src="./receiver.js"></script>
+  </head>
+  <body>
+    <main class="receiver-screen">
+      <img id="artwork" class="receiver-artwork" alt="" />
+      <div class="receiver-gradient"></div>
+      <section class="receiver-caption">
+        <p id="credit" class="receiver-credit"></p>
+        <h1 id="title"></h1>
+        <p id="meta" class="receiver-meta"></p>
+      </section>
+    </main>
+  </body>
+</html>
