@@ -9,6 +9,7 @@ const DEFAULT_ARTWORK = {
 };
 
 let castReady = false;
+let activeSession = null;
 
 function setStatus(message) {
   document.getElementById("status").textContent = message;
@@ -23,7 +24,7 @@ function getAppId() {
 }
 
 function getCurrentSession() {
-  return cast.framework.CastContext.getInstance().getCurrentSession();
+  return activeSession || cast.framework.CastContext.getInstance().getCurrentSession();
 }
 
 function formatError(error) {
@@ -78,7 +79,8 @@ function launchReceiver() {
   cast.framework.CastContext.getInstance()
     .requestSession()
     .then(() => {
-      const session = getCurrentSession();
+      const session = cast.framework.CastContext.getInstance().getCurrentSession();
+      activeSession = session || activeSession;
       setStatus("Receiver launched. You can now send artwork to the TV.");
       setDebug(
         session
@@ -134,11 +136,23 @@ window.addEventListener("load", () => {
   cast.framework.CastContext.getInstance().addEventListener(
     cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
     (event) => {
+      activeSession = cast.framework.CastContext.getInstance().getCurrentSession();
+      if (
+        event.sessionState === cast.framework.SessionState.SESSION_ENDED ||
+        event.sessionState === cast.framework.SessionState.NO_SESSION
+      ) {
+        activeSession = null;
+      }
+
       setDebug(
         `Session state: ${event.sessionState}${
           event.errorCode ? ` | error=${event.errorCode}` : ""
         }`
       );
+
+      if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
+        setStatus("Receiver launched. You can now send artwork to the TV.");
+      }
     }
   );
 });
