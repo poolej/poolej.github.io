@@ -8,6 +8,13 @@ const FALLBACK_ARTWORK = {
   credit: "National Gallery of Art Open Data",
 };
 
+function setReceiverStatus(message) {
+  const node = document.getElementById("receiver-status");
+  if (node) {
+    node.textContent = message;
+  }
+}
+
 function renderArtwork(artwork) {
   const image = document.getElementById("artwork");
   const title = document.getElementById("title");
@@ -18,7 +25,8 @@ function renderArtwork(artwork) {
   image.alt = `${artwork.title} by ${artwork.artist}`;
   title.textContent = artwork.title;
   meta.textContent = `${artwork.artist}, ${artwork.date}`;
-  credit.textContent = artwork.credit || "National Gallery of Art Open Data";
+  credit.textContent = artwork.credit || "National Gallery of Art";
+  setReceiverStatus("Receiver ready.");
 }
 
 function parseMessage(event) {
@@ -34,6 +42,7 @@ function parseMessage(event) {
 }
 
 window.addEventListener("load", () => {
+  setReceiverStatus("Window loaded. Initializing receiver.");
   renderArtwork(FALLBACK_ARTWORK);
 
   const context = cast.framework.CastReceiverContext.getInstance();
@@ -41,8 +50,10 @@ window.addEventListener("load", () => {
   options.disableIdleTimeout = true;
 
   context.addCustomMessageListener(NAMESPACE, (event) => {
+    setReceiverStatus("Message received from sender.");
     const payload = parseMessage(event);
     if (!payload) {
+      setReceiverStatus("Received message, but payload could not be parsed.");
       return;
     }
 
@@ -51,5 +62,6 @@ window.addEventListener("load", () => {
     }
   });
 
+  setReceiverStatus("Starting Cast receiver context.");
   context.start(options);
 });

@@ -56,7 +56,8 @@ body {
 
 .receiver-credit,
 .receiver-meta,
-#title {
+#title,
+.receiver-status {
   margin: 0;
 }
 
@@ -77,4 +78,10 @@ body {
   margin-top: 0.65rem;
   font-size: clamp(1.05rem, 1.6vw, 1.6rem);
   color: var(--muted);
+}
+
+.receiver-status {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: rgba(246, 242, 232, 0.58);
 }
