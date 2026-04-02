@@ -8,10 +8,9 @@ window.addEventListener("load", () => {
   }
 
   try {
-    setStatus("Window loaded. Starting Cast receiver context.");
+    setStatus("Henri Rousseau, 1910");
     const context = cast.framework.CastReceiverContext.getInstance();
     context.start();
-    setStatus("Cast receiver context started.");
   } catch (error) {
     setStatus(`Receiver error: ${error?.message || error}`);
   }
