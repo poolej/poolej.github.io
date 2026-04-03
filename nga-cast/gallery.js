@@ -396,10 +396,6 @@ function buildForYouRecommendations() {
       continue;
     }
 
-    if (favoriteIds.has(artwork.objectId)) {
-      continue;
-    }
-
     const candidate = tasteVectorsById.get(String(artwork.objectId));
     if (!candidate) {
       continue;
