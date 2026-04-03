@@ -15,7 +15,6 @@ let artistSummaryCache = loadArtistSummaryCache();
 let descriptionRequestId = 0;
 let currentArtwork = null;
 let favoriteIds = loadFavoriteIds();
-let isDescriptionExpanded = false;
 
 function loadFavoriteIds() {
   try {
@@ -92,9 +91,41 @@ function cleanArtistName(name) {
     .trim();
 }
 
+function hasSpecificArtistName(name) {
+  const cleanedArtist = cleanArtistName(name);
+  if (!cleanedArtist) {
+    return false;
+  }
+
+  if (
+    /(^| )(unknown|anonymous|unidentified)( |$)/i.test(cleanedArtist) ||
+    /\bcentury\b/i.test(cleanedArtist) ||
+    /\bschool\b/i.test(cleanedArtist) ||
+    /\bworkshop\b/i.test(cleanedArtist) ||
+    /\bcircle\b/i.test(cleanedArtist)
+  ) {
+    return false;
+  }
+
+  if (
+    /^(american|french|italian|spanish|dutch|german|english|british|florentine|venetian|netherlandish)\b/i.test(
+      cleanedArtist
+    )
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function clearDescriptionText() {
+  const descriptionNode = document.getElementById("description");
+  descriptionNode.textContent = "";
+}
+
 async function fetchArtistSummary(artist) {
   const cleanedArtist = cleanArtistName(artist);
-  if (!cleanedArtist) {
+  if (!cleanedArtist || !hasSpecificArtistName(cleanedArtist)) {
     return "";
   }
 
@@ -168,18 +199,8 @@ function makeCaptionStyleArtistSummary(summary, artist) {
 
 function setDescriptionText(text, artwork) {
   const descriptionNode = document.getElementById("description");
-  const toggleNode = document.getElementById("description-toggle");
   const resolvedText = text || summarizeDescription(artwork.description, artwork);
   descriptionNode.textContent = resolvedText;
-  isDescriptionExpanded = false;
-  descriptionNode.classList.add("is-collapsed");
-
-  window.requestAnimationFrame(() => {
-    const shouldShowToggle = resolvedText && descriptionNode.scrollHeight > descriptionNode.clientHeight + 4;
-    toggleNode.hidden = !shouldShowToggle;
-    toggleNode.textContent = "Expand";
-    toggleNode.setAttribute("aria-expanded", "false");
-  });
 }
 
 function fitTitle() {
@@ -202,6 +223,12 @@ function fitTitle() {
 
 async function renderDescription(artwork) {
   const requestId = ++descriptionRequestId;
+
+  if (!hasSpecificArtistName(artwork.artist)) {
+    clearDescriptionText();
+    return;
+  }
+
   setDescriptionText("", artwork);
 
   const artistSummary = await fetchArtistSummary(artwork.artist);
@@ -306,7 +333,6 @@ function renderError(message) {
   document.getElementById("medium").textContent = "";
   document.getElementById("credit").textContent = "National Gallery of Art";
   document.getElementById("description").textContent = "";
-  document.getElementById("description-toggle").hidden = true;
 }
 
 function updateFilterButtons() {
@@ -462,15 +488,6 @@ function handleKeydown(event) {
   }
 }
 
-function toggleDescription() {
-  const descriptionNode = document.getElementById("description");
-  const toggleNode = document.getElementById("description-toggle");
-  isDescriptionExpanded = !isDescriptionExpanded;
-  descriptionNode.classList.toggle("is-collapsed", !isDescriptionExpanded);
-  toggleNode.textContent = isDescriptionExpanded ? "Collapse" : "Expand";
-  toggleNode.setAttribute("aria-expanded", isDescriptionExpanded ? "true" : "false");
-}
-
 window.addEventListener("load", async () => {
   try {
     allArtworks = await loadCatalog();
@@ -498,9 +515,6 @@ window.addEventListener("load", async () => {
     });
     document.getElementById("favorite-toggle").addEventListener("click", () => {
       toggleFavorite();
-    });
-    document.getElementById("description-toggle").addEventListener("click", () => {
-      toggleDescription();
     });
     document.getElementById("artist-search").addEventListener("input", (event) => {
       artistQuery = event.target.value;
