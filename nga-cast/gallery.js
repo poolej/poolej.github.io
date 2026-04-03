@@ -15,6 +15,7 @@ let artistSummaryCache = loadArtistSummaryCache();
 let descriptionRequestId = 0;
 let currentArtwork = null;
 let favoriteIds = loadFavoriteIds();
+let isDescriptionExpanded = false;
 
 function loadFavoriteIds() {
   try {
@@ -166,8 +167,19 @@ function makeCaptionStyleArtistSummary(summary, artist) {
 }
 
 function setDescriptionText(text, artwork) {
-  document.getElementById("description").textContent =
-    text || summarizeDescription(artwork.description, artwork);
+  const descriptionNode = document.getElementById("description");
+  const toggleNode = document.getElementById("description-toggle");
+  const resolvedText = text || summarizeDescription(artwork.description, artwork);
+  descriptionNode.textContent = resolvedText;
+  isDescriptionExpanded = false;
+  descriptionNode.classList.add("is-collapsed");
+
+  window.requestAnimationFrame(() => {
+    const shouldShowToggle = resolvedText && descriptionNode.scrollHeight > descriptionNode.clientHeight + 4;
+    toggleNode.hidden = !shouldShowToggle;
+    toggleNode.textContent = "Expand";
+    toggleNode.setAttribute("aria-expanded", "false");
+  });
 }
 
 function fitTitle() {
@@ -294,6 +306,7 @@ function renderError(message) {
   document.getElementById("medium").textContent = "";
   document.getElementById("credit").textContent = "National Gallery of Art";
   document.getElementById("description").textContent = "";
+  document.getElementById("description-toggle").hidden = true;
 }
 
 function updateFilterButtons() {
@@ -370,7 +383,19 @@ function rebuildVisibleArtworks() {
       return true;
     }
 
-    return (artwork.artist || "").toLowerCase().includes(normalizedQuery);
+    const searchableText = [
+      artwork.artist,
+      artwork.title,
+      artwork.medium,
+      artwork.classification,
+      artwork.description,
+      artwork.date,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return searchableText.includes(normalizedQuery);
   });
 
   artworks = shuffle(artworks);
@@ -437,6 +462,15 @@ function handleKeydown(event) {
   }
 }
 
+function toggleDescription() {
+  const descriptionNode = document.getElementById("description");
+  const toggleNode = document.getElementById("description-toggle");
+  isDescriptionExpanded = !isDescriptionExpanded;
+  descriptionNode.classList.toggle("is-collapsed", !isDescriptionExpanded);
+  toggleNode.textContent = isDescriptionExpanded ? "Collapse" : "Expand";
+  toggleNode.setAttribute("aria-expanded", isDescriptionExpanded ? "true" : "false");
+}
+
 window.addEventListener("load", async () => {
   try {
     allArtworks = await loadCatalog();
@@ -464,6 +498,9 @@ window.addEventListener("load", async () => {
     });
     document.getElementById("favorite-toggle").addEventListener("click", () => {
       toggleFavorite();
+    });
+    document.getElementById("description-toggle").addEventListener("click", () => {
+      toggleDescription();
     });
     document.getElementById("artist-search").addEventListener("input", (event) => {
       artistQuery = event.target.value;

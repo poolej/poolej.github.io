@@ -192,6 +192,31 @@ h1 {
 
 .description {
   color: #d9d0c0;
+  overflow: hidden;
+}
+
+.description.is-collapsed {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.description-toggle {
+  align-self: flex-start;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(245, 241, 232, 0.72);
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.description-toggle:hover,
+.description-toggle:focus-visible {
+  color: rgba(245, 241, 232, 0.96);
+  outline: none;
 }
 
 .note {
