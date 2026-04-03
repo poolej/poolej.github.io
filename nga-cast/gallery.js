@@ -4,6 +4,7 @@ const WIKIPEDIA_SEARCH_URL = "https://en.wikipedia.org/w/rest.php/v1/search/page
 const WIKIPEDIA_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary";
 const ARTIST_CACHE_KEY = "nga-cast-artist-summaries-v1";
 const FAVORITES_KEY = "nga-cast-favorites-v1";
+const TASTE_VECTORS_URL = "./taste_vectors.json";
 let allArtworks = [];
 let artworks = [];
 let currentIndex = 0;
@@ -15,6 +16,8 @@ let artistSummaryCache = loadArtistSummaryCache();
 let descriptionRequestId = 0;
 let currentArtwork = null;
 let favoriteIds = loadFavoriteIds();
+let tasteVectorsById = null;
+let tasteRecommendations = [];
 
 function loadFavoriteIds() {
   try {
@@ -44,6 +47,21 @@ function loadArtistSummaryCache() {
   } catch {
     return {};
   }
+}
+
+async function loadTasteVectors() {
+  if (tasteVectorsById) {
+    return tasteVectorsById;
+  }
+
+  const response = await fetch(TASTE_VECTORS_URL, { cache: "force-cache" });
+  if (!response.ok) {
+    throw new Error(`Could not load recommendation data: ${response.status}`);
+  }
+
+  const rows = await response.json();
+  tasteVectorsById = new Map(rows.map((row) => [String(row.objectId), row]));
+  return tasteVectorsById;
 }
 
 function saveArtistSummaryCache() {
@@ -313,6 +331,97 @@ function shuffle(list) {
   return copy;
 }
 
+function cosineSimilarity(left, right) {
+  if (!left || !right || left.length !== right.length) {
+    return 0;
+  }
+
+  let dot = 0;
+  let leftNorm = 0;
+  let rightNorm = 0;
+  for (let i = 0; i < left.length; i += 1) {
+    const l = Number(left[i]) || 0;
+    const r = Number(right[i]) || 0;
+    dot += l * r;
+    leftNorm += l * l;
+    rightNorm += r * r;
+  }
+
+  if (!leftNorm || !rightNorm) {
+    return 0;
+  }
+
+  return dot / (Math.sqrt(leftNorm) * Math.sqrt(rightNorm));
+}
+
+function metadataBoost(candidate, favorites) {
+  let boost = 0;
+  for (const favorite of favorites) {
+    if (candidate.medium && favorite.medium && candidate.medium === favorite.medium) {
+      boost += 0.03;
+    }
+    if (
+      candidate.orientation &&
+      favorite.orientation &&
+      candidate.orientation === favorite.orientation
+    ) {
+      boost += 0.02;
+    }
+    if (candidate.topEmotions && favorite.topEmotions) {
+      const overlap = candidate.topEmotions.filter((emotion) =>
+        favorite.topEmotions.includes(emotion)
+      ).length;
+      boost += Math.min(overlap, 2) * 0.01;
+    }
+  }
+  return boost;
+}
+
+function buildForYouRecommendations() {
+  if (!tasteVectorsById) {
+    return [];
+  }
+
+  const favoriteVectors = [...favoriteIds]
+    .map((id) => tasteVectorsById.get(String(id)))
+    .filter(Boolean);
+
+  if (favoriteVectors.length === 0) {
+    return [];
+  }
+
+  const scored = [];
+  for (const artwork of allArtworks) {
+    if (artwork.classification !== "Painting") {
+      continue;
+    }
+
+    if (favoriteIds.has(artwork.objectId)) {
+      continue;
+    }
+
+    const candidate = tasteVectorsById.get(String(artwork.objectId));
+    if (!candidate) {
+      continue;
+    }
+
+    let totalScore = 0;
+    for (const favorite of favoriteVectors) {
+      const clip = cosineSimilarity(candidate.clipImageVector, favorite.clipImageVector);
+      const visual = cosineSimilarity(candidate.visualVector, favorite.visualVector);
+      const emotion = cosineSimilarity(candidate.emotionVector, favorite.emotionVector);
+      totalScore += (clip * 0.5) + (visual * 0.3) + (emotion * 0.15);
+    }
+
+    const averageScore = totalScore / favoriteVectors.length;
+    const boost = metadataBoost(candidate, favoriteVectors);
+    scored.push({ objectId: artwork.objectId, score: averageScore + boost });
+  }
+
+  scored.sort((left, right) => right.score - left.score);
+  return scored.map((item) => item.objectId);
+}
+
 async function loadCatalog() {
   const response = await fetch(CATALOG_URL, { cache: "no-store" });
   if (!response.ok) {
@@ -345,6 +454,9 @@ function updateFilterButtons() {
   document
     .getElementById("favorites-button")
     .classList.toggle("is-active", currentFilter === "favorites");
+  document
+    .getElementById("for-you-button")
+    .classList.toggle("is-active", currentFilter === "for-you");
 }
 
 function updateFavoriteButton() {
@@ -375,9 +487,12 @@ function toggleFavorite() {
 
   saveFavoriteIds();
   updateFavoriteButton();
+  tasteRecommendations = [];
 
   if (currentFilter === "favorites") {
     applyFilter("favorites");
+  } else if (currentFilter === "for-you") {
+    applyFilter("for-you");
   } else {
     updateSearchCount();
   }
@@ -395,6 +510,7 @@ function updateSearchCount() {
 
 function rebuildVisibleArtworks() {
   const normalizedQuery = artistQuery.trim().toLowerCase();
+  const recommendedIds = new Set(tasteRecommendations);
 
   artworks = allArtworks.filter((artwork) => {
     if (currentFilter === "paintings" && artwork.classification !== "Painting") {
@@ -402,6 +518,10 @@ function rebuildVisibleArtworks() {
     }
 
     if (currentFilter === "favorites" && !favoriteIds.has(artwork.objectId)) {
+      return false;
+    }
+
+    if (currentFilter === "for-you" && !recommendedIds.has(artwork.objectId)) {
       return false;
     }
 
@@ -424,13 +544,22 @@ function rebuildVisibleArtworks() {
     return searchableText.includes(normalizedQuery);
   });
 
-  artworks = shuffle(artworks);
+  if (currentFilter === "for-you") {
+    const order = new Map(tasteRecommendations.map((id, index) => [id, index]));
+    artworks.sort((left, right) => order.get(left.objectId) - order.get(right.objectId));
+  } else {
+    artworks = shuffle(artworks);
+  }
   currentIndex = 0;
   updateSearchCount();
 }
 
-function applyFilter(filterName) {
+async function applyFilter(filterName) {
   currentFilter = filterName;
+  if (filterName === "for-you") {
+    await loadTasteVectors();
+    tasteRecommendations = buildForYouRecommendations();
+  }
   updateFilterButtons();
   rebuildVisibleArtworks();
 
@@ -512,6 +641,9 @@ window.addEventListener("load", async () => {
     });
     document.getElementById("favorites-button").addEventListener("click", () => {
       applyFilter("favorites");
+    });
+    document.getElementById("for-you-button").addEventListener("click", () => {
+      applyFilter("for-you");
     });
     document.getElementById("favorite-toggle").addEventListener("click", () => {
       toggleFavorite();
