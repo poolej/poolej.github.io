@@ -175,6 +175,10 @@ h1 {
   opacity: 1;
 }
 
+.favorite-toggle.is-active {
+  opacity: 1;
+}
+
 .filter-divider {
   opacity: 0.45;
 }

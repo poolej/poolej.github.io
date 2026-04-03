@@ -3,6 +3,7 @@ const CATALOG_URL = "./catalog.json";
 const WIKIPEDIA_SEARCH_URL = "https://en.wikipedia.org/w/rest.php/v1/search/page";
 const WIKIPEDIA_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary";
 const ARTIST_CACHE_KEY = "nga-cast-artist-summaries-v1";
+const FAVORITES_KEY = "nga-cast-favorites-v1";
 let allArtworks = [];
 let artworks = [];
 let currentIndex = 0;
@@ -13,6 +14,28 @@ let artistQuery = "";
 let artistSummaryCache = loadArtistSummaryCache();
 let descriptionRequestId = 0;
 let currentArtwork = null;
+let favoriteIds = loadFavoriteIds();
+
+function loadFavoriteIds() {
+  try {
+    const raw = window.localStorage.getItem(FAVORITES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveFavoriteIds() {
+  try {
+    window.localStorage.setItem(
+      FAVORITES_KEY,
+      JSON.stringify([...favoriteIds])
+    );
+  } catch {
+    // Ignore storage failures and keep in-memory favorites.
+  }
+}
 
 function loadArtistSummaryCache() {
   try {
@@ -188,6 +211,7 @@ function renderArtwork(artwork) {
   document.getElementById("medium").textContent = (artwork.medium || "").trim();
   document.getElementById("credit").textContent =
     artwork.credit || "National Gallery of Art";
+  updateFavoriteButton();
   fitTitle();
   renderDescription(artwork);
 }
@@ -279,6 +303,45 @@ function updateFilterButtons() {
   document
     .getElementById("all-art-button")
     .classList.toggle("is-active", currentFilter === "all");
+  document
+    .getElementById("favorites-button")
+    .classList.toggle("is-active", currentFilter === "favorites");
+}
+
+function updateFavoriteButton() {
+  const button = document.getElementById("favorite-toggle");
+  if (!button || !currentArtwork) {
+    return;
+  }
+
+  const isFavorite = favoriteIds.has(currentArtwork.objectId);
+  button.textContent = isFavorite ? "★" : "☆";
+  button.classList.toggle("is-active", isFavorite);
+  button.setAttribute(
+    "aria-label",
+    isFavorite ? "Remove from favorites" : "Add to favorites"
+  );
+}
+
+function toggleFavorite() {
+  if (!currentArtwork) {
+    return;
+  }
+
+  if (favoriteIds.has(currentArtwork.objectId)) {
+    favoriteIds.delete(currentArtwork.objectId);
+  } else {
+    favoriteIds.add(currentArtwork.objectId);
+  }
+
+  saveFavoriteIds();
+  updateFavoriteButton();
+
+  if (currentFilter === "favorites") {
+    applyFilter("favorites");
+  } else {
+    updateSearchCount();
+  }
 }
 
 function updateSearchCount() {
@@ -296,6 +359,10 @@ function rebuildVisibleArtworks() {
 
   artworks = allArtworks.filter((artwork) => {
     if (currentFilter === "paintings" && artwork.classification !== "Painting") {
+      return false;
+    }
+
+    if (currentFilter === "favorites" && !favoriteIds.has(artwork.objectId)) {
       return false;
     }
 
@@ -391,6 +458,12 @@ window.addEventListener("load", async () => {
     });
     document.getElementById("all-art-button").addEventListener("click", () => {
       applyFilter("all");
+    });
+    document.getElementById("favorites-button").addEventListener("click", () => {
+      applyFilter("favorites");
+    });
+    document.getElementById("favorite-toggle").addEventListener("click", () => {
+      toggleFavorite();
     });
     document.getElementById("artist-search").addEventListener("input", (event) => {
       artistQuery = event.target.value;
