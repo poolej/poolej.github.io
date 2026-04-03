@@ -18,6 +18,7 @@ let currentArtwork = null;
 let favoriteIds = loadFavoriteIds();
 let tasteVectorsById = null;
 let tasteRecommendations = [];
+let surpriseRecommendations = [];
 
 function loadFavoriteIds() {
   try {
@@ -377,6 +378,18 @@ function metadataBoost(candidate, favorites) {
   return boost;
 }
 
+function averageSimilarity(candidate, favorites, key) {
+  if (favorites.length === 0) {
+    return 0;
+  }
+
+  let total = 0;
+  for (const favorite of favorites) {
+    total += cosineSimilarity(candidate[key], favorite[key]);
+  }
+  return total / favorites.length;
+}
+
 function buildForYouRecommendations() {
   if (!tasteVectorsById) {
     return [];
@@ -418,6 +431,92 @@ function buildForYouRecommendations() {
   return scored.map((item) => item.objectId);
 }
 
+function rerankForDiversity(scoredItems, limit = 400) {
+  const pool = [...scoredItems];
+  const chosen = [];
+  const seenArtists = new Map();
+  const seenMediums = new Map();
+
+  while (pool.length > 0 && chosen.length < limit) {
+    let bestIndex = 0;
+    let bestScore = -Infinity;
+
+    for (let index = 0; index < pool.length; index += 1) {
+      const item = pool[index];
+      const artistPenalty = (seenArtists.get(item.artist) || 0) * 0.16;
+      const mediumPenalty = (seenMediums.get(item.medium) || 0) * 0.05;
+      const adjustedScore = item.score - artistPenalty - mediumPenalty;
+      if (adjustedScore > bestScore) {
+        bestScore = adjustedScore;
+        bestIndex = index;
+      }
+    }
+
+    const [picked] = pool.splice(bestIndex, 1);
+    chosen.push(picked);
+    seenArtists.set(picked.artist, (seenArtists.get(picked.artist) || 0) + 1);
+    seenMediums.set(picked.medium, (seenMediums.get(picked.medium) || 0) + 1);
+  }
+
+  return chosen.map((item) => item.objectId);
+}
+
+function buildSurpriseRecommendations() {
+  if (!tasteVectorsById) {
+    return [];
+  }
+
+  const favoriteVectors = [...favoriteIds]
+    .map((id) => tasteVectorsById.get(String(id)))
+    .filter(Boolean);
+
+  if (favoriteVectors.length === 0) {
+    return [];
+  }
+
+  const favoriteArtists = new Set(
+    allArtworks
+      .filter((artwork) => favoriteIds.has(artwork.objectId))
+      .map((artwork) => artwork.artist)
+      .filter(Boolean)
+  );
+
+  const scored = [];
+  for (const artwork of allArtworks) {
+    if (artwork.classification !== "Painting") {
+      continue;
+    }
+
+    const candidate = tasteVectorsById.get(String(artwork.objectId));
+    if (!candidate) {
+      continue;
+    }
+
+    const clip = averageSimilarity(candidate, favoriteVectors, "clipImageVector");
+    const visual = averageSimilarity(candidate, favoriteVectors, "visualVector");
+    const emotion = averageSimilarity(candidate, favoriteVectors, "emotionVector");
+    const metadata = metadataBoost(candidate, favoriteVectors);
+
+    const tasteMatch = (clip * 0.38) + (visual * 0.24) + (emotion * 0.12) + metadata;
+    const adjacency = Math.max(0, 1 - Math.abs(clip - 0.84) / 0.16) * 0.18;
+    const notSameArtist = favoriteArtists.has(artwork.artist) ? -0.14 : 0.06;
+    const novelty =
+      (candidate.orientation === "portrait" ? 0.015 : 0) +
+      (candidate.medium && favoriteVectors.some((fav) => fav.medium !== candidate.medium) ? 0.025 : 0) +
+      notSameArtist;
+
+    scored.push({
+      objectId: artwork.objectId,
+      artist: artwork.artist || "",
+      medium: artwork.medium || "",
+      score: tasteMatch + adjacency + novelty,
+    });
+  }
+
+  scored.sort((left, right) => right.score - left.score);
+  return rerankForDiversity(scored);
+}
+
 async function loadCatalog() {
   const response = await fetch(CATALOG_URL, { cache: "no-store" });
   if (!response.ok) {
@@ -453,6 +552,9 @@ function updateFilterButtons() {
   document
     .getElementById("for-you-button")
     .classList.toggle("is-active", currentFilter === "for-you");
+  document
+    .getElementById("surprise-button")
+    .classList.toggle("is-active", currentFilter === "surprise");
 }
 
 function updateFavoriteButton() {
@@ -484,11 +586,14 @@ function toggleFavorite() {
   saveFavoriteIds();
   updateFavoriteButton();
   tasteRecommendations = [];
+  surpriseRecommendations = [];
 
   if (currentFilter === "favorites") {
     applyFilter("favorites");
   } else if (currentFilter === "for-you") {
     applyFilter("for-you");
+  } else if (currentFilter === "surprise") {
+    applyFilter("surprise");
   } else {
     updateSearchCount();
   }
@@ -507,6 +612,7 @@ function updateSearchCount() {
 function rebuildVisibleArtworks() {
   const normalizedQuery = artistQuery.trim().toLowerCase();
   const recommendedIds = new Set(tasteRecommendations);
+  const surpriseIds = new Set(surpriseRecommendations);
 
   artworks = allArtworks.filter((artwork) => {
     if (currentFilter === "paintings" && artwork.classification !== "Painting") {
@@ -518,6 +624,10 @@ function rebuildVisibleArtworks() {
     }
 
     if (currentFilter === "for-you" && !recommendedIds.has(artwork.objectId)) {
+      return false;
+    }
+
+    if (currentFilter === "surprise" && !surpriseIds.has(artwork.objectId)) {
       return false;
     }
 
@@ -540,8 +650,9 @@ function rebuildVisibleArtworks() {
     return searchableText.includes(normalizedQuery);
   });
 
-  if (currentFilter === "for-you") {
-    const order = new Map(tasteRecommendations.map((id, index) => [id, index]));
+  if (currentFilter === "for-you" || currentFilter === "surprise") {
+    const ids = currentFilter === "for-you" ? tasteRecommendations : surpriseRecommendations;
+    const order = new Map(ids.map((id, index) => [id, index]));
     artworks.sort((left, right) => order.get(left.objectId) - order.get(right.objectId));
   } else {
     artworks = shuffle(artworks);
@@ -552,9 +663,13 @@ function rebuildVisibleArtworks() {
 
 async function applyFilter(filterName) {
   currentFilter = filterName;
-  if (filterName === "for-you") {
+  if (filterName === "for-you" || filterName === "surprise") {
     await loadTasteVectors();
-    tasteRecommendations = buildForYouRecommendations();
+    if (filterName === "for-you") {
+      tasteRecommendations = buildForYouRecommendations();
+    } else {
+      surpriseRecommendations = buildSurpriseRecommendations();
+    }
   }
   updateFilterButtons();
   rebuildVisibleArtworks();
@@ -640,6 +755,9 @@ window.addEventListener("load", async () => {
     });
     document.getElementById("for-you-button").addEventListener("click", () => {
       applyFilter("for-you");
+    });
+    document.getElementById("surprise-button").addEventListener("click", () => {
+      applyFilter("surprise");
     });
     document.getElementById("favorite-toggle").addEventListener("click", () => {
       toggleFavorite();
