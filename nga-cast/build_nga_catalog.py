@@ -20,6 +20,7 @@ def load_objects():
                 "artist": row["attribution"],
                 "date": row["displaydate"],
                 "classification": row["classification"],
+                "medium": row["medium"],
             }
     return objects
 
@@ -52,6 +53,7 @@ def build_catalog():
                     "artist": details["artist"],
                     "date": details["date"],
                     "classification": details["classification"],
+                    "medium": details["medium"],
                     "width": width,
                     "height": height,
                     "imageUrl": f"{row['iiifurl']}/full/!1920,1080/0/default.jpg",
@@ -67,7 +69,7 @@ def build_catalog():
 def main():
     catalog = build_catalog()
     OUTPUT_JSON.write_text(json.dumps(catalog, ensure_ascii=True), encoding="utf-8")
-    print(f"Wrote {len(catalog)} paintings to {OUTPUT_JSON}")
+    print(f"Wrote {len(catalog)} artworks to {OUTPUT_JSON}")
 
 
 if __name__ == "__main__":

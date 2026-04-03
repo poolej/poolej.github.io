@@ -109,11 +109,13 @@ h1 {
   margin: 0;
   font-size: clamp(2rem, 3vw, 3.2rem);
   line-height: 1.05;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
 }
 
 .meta,
-.note,
+.medium,
 .description {
   margin: 0;
   line-height: 1.5;
@@ -122,6 +124,11 @@ h1 {
 .meta {
   font-size: 1.1rem;
   color: #efe5cf;
+}
+
+.medium {
+  color: rgba(239, 229, 207, 0.78);
+  font-size: 0.98rem;
 }
 
 .caption-controls {

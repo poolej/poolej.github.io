@@ -137,6 +137,7 @@ function makeCaptionStyleArtistSummary(summary, artist) {
   }
 
   summary = summary.replace(/^(A|An|The)\s+/i, "");
+  summary = summary.replace(/^\s*([a-z])/, (match, letter) => letter.toUpperCase());
 
   return summary;
 }
@@ -184,6 +185,7 @@ function renderArtwork(artwork) {
   const artist = (artwork.artist || "").trim();
   const date = (artwork.date || "").trim();
   document.getElementById("meta").textContent = [artist, date].filter(Boolean).join(", ");
+  document.getElementById("medium").textContent = (artwork.medium || "").trim();
   document.getElementById("credit").textContent =
     artwork.credit || "National Gallery of Art";
   fitTitle();
@@ -265,6 +267,7 @@ async function loadCatalog() {
 function renderError(message) {
   document.getElementById("title").textContent = "Catalog unavailable";
   document.getElementById("meta").textContent = message;
+  document.getElementById("medium").textContent = "";
   document.getElementById("credit").textContent = "National Gallery of Art";
   document.getElementById("description").textContent = "";
 }
