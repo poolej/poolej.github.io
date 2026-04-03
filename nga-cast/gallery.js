@@ -461,6 +461,10 @@ function rerankForDiversity(scoredItems, limit = 400) {
   return chosen.map((item) => item.objectId);
 }
 
+function randomBetween(min, max) {
+  return min + (Math.random() * (max - min));
+}
+
 function buildSurpriseRecommendations() {
   if (!tasteVectorsById) {
     return [];
@@ -497,24 +501,28 @@ function buildSurpriseRecommendations() {
     const emotion = averageSimilarity(candidate, favoriteVectors, "emotionVector");
     const metadata = metadataBoost(candidate, favoriteVectors);
 
-    const tasteMatch = (clip * 0.38) + (visual * 0.24) + (emotion * 0.12) + metadata;
-    const adjacency = Math.max(0, 1 - Math.abs(clip - 0.84) / 0.16) * 0.18;
-    const notSameArtist = favoriteArtists.has(artwork.artist) ? -0.14 : 0.06;
+    const tasteMatch = (clip * 0.24) + (visual * 0.18) + (emotion * 0.14) + metadata;
+    const adjacency =
+      Math.max(0, 1 - Math.abs(clip - 0.8) / 0.17) * 0.22 +
+      Math.max(0, 1 - Math.abs(visual - 0.78) / 0.18) * 0.12;
+    const exactnessPenalty = clip > 0.92 ? (clip - 0.92) * 0.8 : 0;
+    const notSameArtist = favoriteArtists.has(artwork.artist) ? -0.22 : 0.08;
     const novelty =
       (candidate.orientation === "portrait" ? 0.015 : 0) +
       (candidate.medium && favoriteVectors.some((fav) => fav.medium !== candidate.medium) ? 0.025 : 0) +
-      notSameArtist;
+      notSameArtist +
+      randomBetween(0, 0.035);
 
     scored.push({
       objectId: artwork.objectId,
       artist: artwork.artist || "",
       medium: artwork.medium || "",
-      score: tasteMatch + adjacency + novelty,
+      score: tasteMatch + adjacency + novelty - exactnessPenalty,
     });
   }
 
   scored.sort((left, right) => right.score - left.score);
-  return rerankForDiversity(scored);
+  return rerankForDiversity(scored.slice(0, 900));
 }
 
 async function loadCatalog() {
