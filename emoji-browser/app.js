@@ -10,13 +10,15 @@ const STORAGE_KEYS = {
   size: "emoji-browser-size"
 };
 
+const DEFAULT_EMOJI_SIZE = 120;
+
 const state = {
   search: "",
   group: "All",
   favoritesOnly: false,
   favorites: loadList(STORAGE_KEYS.favorites),
   recent: loadList(STORAGE_KEYS.recent),
-  size: Number(localStorage.getItem(STORAGE_KEYS.size) || 72)
+  size: Number(localStorage.getItem(STORAGE_KEYS.size) || DEFAULT_EMOJI_SIZE)
 };
 
 const elements = {
