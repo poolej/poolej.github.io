@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emoji Browser</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">GitHub Pages Utility</p>
+          <h1>Emoji Browser</h1>
+          <p class="hero-text">
+            Browse the full Unicode emoji set with bigger previews, search,
+            categories, favorites, and easy cross-machine backup.
+          </p>
+        </div>
+
+        <div class="hero-panels">
+          <div class="hero-stat">
+            <span class="hero-label">Unicode Set</span>
+            <strong id="emoji-count">0</strong>
+            <span class="hero-detail" id="unicode-version">Loading...</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-label">Favorites</span>
+            <strong id="favorite-count">0</strong>
+            <span class="hero-detail">Saved in your browser</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="sync-panel">
+        <div class="sync-copy">
+          <h2>Favorites Sync</h2>
+          <p>
+            GitHub Pages is static, so favorites can’t auto-sync by themselves.
+            Export a tiny backup file or paste a sync code on another machine.
+          </p>
+          <details class="help-panel">
+            <summary>Sync Help</summary>
+            <div class="help-content">
+              <p>
+                Your favorites and recent emoji are normally saved in this browser only,
+                using local browser storage for this site. That means they follow this
+                browser profile on this machine, but they do not automatically appear in
+                another browser or on another computer.
+              </p>
+              <p>
+                To move favorites to another machine, click <strong>Export JSON</strong>.
+                Your browser will usually place the file in your Downloads folder unless
+                you’ve chosen a different default download location. On the other
+                machine, open this same emoji browser and click <strong>Import JSON</strong>,
+                then select that exported file.
+              </p>
+              <p>
+                If you prefer not to manage a file, click <strong>Copy Sync Code</strong>
+                to copy a small text backup to your clipboard. Send it to yourself in
+                whatever private place you trust, then open the app elsewhere and use
+                <strong>Paste Sync Code</strong>.
+              </p>
+              <p>
+                The export file only contains your favorites list and a timestamp. It
+                does not include account credentials or anything from the rest of your
+                computer.
+              </p>
+            </div>
+          </details>
+        </div>
+        <div class="sync-actions">
+          <button id="export-json" type="button">Export JSON</button>
+          <button id="copy-sync-code" type="button">Copy Sync Code</button>
+          <label class="import-button" for="import-json">Import JSON</label>
+          <input id="import-json" type="file" accept="application/json" />
+          <button id="paste-sync-code" type="button">Paste Sync Code</button>
+        </div>
+      </section>
+
+      <section class="toolbar">
+        <label class="field search-field">
+          <span>Search</span>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Search smile, cat, weather, flag, music, food..."
+            autocomplete="off"
+          />
+        </label>
+
+        <label class="field">
+          <span>Emoji Size</span>
+          <input id="size-slider" type="range" min="52" max="120" value="72" />
+        </label>
+
+        <label class="field">
+          <span>Group</span>
+          <select id="group-select"></select>
+        </label>
+
+        <label class="toggle">
+          <input id="favorites-only" type="checkbox" />
+          <span>Favorites only</span>
+        </label>
+      </section>
+
+      <section class="quick-groups">
+        <div class="quick-card">
+          <div class="section-head">
+            <h2>Favorites</h2>
+            <button id="clear-favorites" class="ghost-button" type="button">Clear</button>
+          </div>
+          <div id="favorites-grid" class="mini-grid empty-state">
+            Click the star on any emoji to pin it here.
+          </div>
+        </div>
+
+        <div class="quick-card">
+          <div class="section-head">
+            <h2>Recently Copied</h2>
+            <button id="clear-recent" class="ghost-button" type="button">Clear</button>
+          </div>
+          <div id="recent-grid" class="mini-grid empty-state">
+            Copy an emoji and it will appear here.
+          </div>
+        </div>
+      </section>
+
+      <main>
+        <div class="results-bar">
+          <div id="results-meta" class="results-meta"></div>
+          <div id="active-subgroup" class="active-subgroup"></div>
+        </div>
+        <div id="emoji-grid" class="emoji-grid"></div>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="./emoji-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
