@@ -371,7 +371,7 @@ function shouldForceFallback(emoji) {
 
   return emoji.codepoints
     .split(/\s+/)
-    .some((codepoint) => /^1fae/i.test(codepoint) || /^1faf/i.test(codepoint));
+    .some((codepoint) => /^1fac/i.test(codepoint) || /^1fae/i.test(codepoint) || /^1faf/i.test(codepoint));
 }
 
 function supportsNativeEmoji(char) {
