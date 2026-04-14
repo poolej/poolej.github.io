@@ -16,6 +16,9 @@ const glyphSupportCache = new Map();
 const glyphSignatureCache = new Map();
 let glyphCanvas;
 let glyphContext;
+const FORCED_FALLBACK_IDS = new Set([
+  "fight-cloud"
+]);
 
 const state = {
   search: "",
@@ -322,7 +325,7 @@ function saveList(key, list) {
 }
 
 function createEmojiPresentation(emoji, compact) {
-  if (supportsNativeEmoji(emoji.char)) {
+  if (!shouldForceFallback(emoji) && supportsNativeEmoji(emoji.char)) {
     const span = document.createElement("span");
     span.className = compact ? "mini-emoji-glyph" : "emoji-glyph";
     span.textContent = emoji.char;
@@ -359,6 +362,16 @@ function getEmojiFallbackUrl(codepoints) {
     .filter((codepoint) => codepoint && codepoint !== "fe0f")
     .join("_");
   return `${EMOJI_FALLBACK_BASE_URL}/${normalizedCodepoints}/emoji.svg`;
+}
+
+function shouldForceFallback(emoji) {
+  if (FORCED_FALLBACK_IDS.has(emoji.id)) {
+    return true;
+  }
+
+  return emoji.codepoints
+    .split(/\s+/)
+    .some((codepoint) => /^1fae/i.test(codepoint) || /^1faf/i.test(codepoint));
 }
 
 function supportsNativeEmoji(char) {
