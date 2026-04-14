@@ -347,6 +347,20 @@ h1 {
   font-size: var(--emoji-size);
   line-height: 1;
   text-align: center;
+  min-height: calc(var(--emoji-size) + 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emoji-glyph {
+  display: inline-block;
+}
+
+.emoji-fallback-image {
+  width: var(--emoji-size);
+  height: var(--emoji-size);
+  object-fit: contain;
 }
 
 .emoji-name {
@@ -400,6 +414,17 @@ h1 {
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--line);
   font-size: 28px;
+}
+
+.mini-emoji-glyph {
+  display: inline-block;
+  line-height: 1;
+}
+
+.mini-emoji-image {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .toast {

@@ -11,6 +11,11 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_EMOJI_SIZE = 120;
+const EMOJI_FALLBACK_BASE_URL = "https://fonts.gstatic.com/s/e/notoemoji/latest";
+const glyphSupportCache = new Map();
+const glyphSignatureCache = new Map();
+let glyphCanvas;
+let glyphContext;
 
 const state = {
   search: "",
@@ -162,7 +167,7 @@ function createEmojiCard(emoji) {
 
   const char = document.createElement("div");
   char.className = "emoji-char";
-  char.textContent = emoji.char;
+  char.appendChild(createEmojiPresentation(emoji, false));
 
   const name = document.createElement("div");
   name.className = "emoji-name";
@@ -225,9 +230,9 @@ function renderMiniGrid(container, ids, emptyText) {
     const tile = document.createElement("button");
     tile.type = "button";
     tile.className = "mini-tile";
-    tile.textContent = emoji.char;
     tile.title = emoji.name;
     tile.addEventListener("click", () => copyEmoji(emoji));
+    tile.appendChild(createEmojiPresentation(emoji, true));
     fragment.appendChild(tile);
   });
   container.appendChild(fragment);
@@ -314,6 +319,124 @@ function loadList(key) {
 
 function saveList(key, list) {
   localStorage.setItem(key, JSON.stringify(list));
+}
+
+function createEmojiPresentation(emoji, compact) {
+  if (supportsNativeEmoji(emoji.char)) {
+    const span = document.createElement("span");
+    span.className = compact ? "mini-emoji-glyph" : "emoji-glyph";
+    span.textContent = emoji.char;
+    return span;
+  }
+
+  const image = document.createElement("img");
+  image.className = compact ? "mini-emoji-image" : "emoji-fallback-image";
+  image.src = getEmojiFallbackUrl(emoji.codepoints);
+  image.alt = emoji.name;
+  image.loading = "lazy";
+  image.decoding = "async";
+  image.referrerPolicy = "no-referrer";
+  image.addEventListener(
+    "error",
+    () => {
+      image.replaceWith(createGlyphSpan(emoji.char, compact));
+    },
+    { once: true }
+  );
+  return image;
+}
+
+function createGlyphSpan(char, compact) {
+  const span = document.createElement("span");
+  span.className = compact ? "mini-emoji-glyph" : "emoji-glyph";
+  span.textContent = char;
+  return span;
+}
+
+function getEmojiFallbackUrl(codepoints) {
+  const normalizedCodepoints = codepoints
+    .split(/\s+/)
+    .filter((codepoint) => codepoint && codepoint !== "fe0f")
+    .join("_");
+  return `${EMOJI_FALLBACK_BASE_URL}/${normalizedCodepoints}/emoji.svg`;
+}
+
+function supportsNativeEmoji(char) {
+  if (glyphSupportCache.has(char)) {
+    return glyphSupportCache.get(char);
+  }
+
+  const emojiSignature = getGlyphSignature(char);
+  const placeholderSignatures = [
+    getGlyphSignature("\uFFFD"),
+    getGlyphSignature("\u25A1"),
+    getGlyphSignature("\u25CC")
+  ];
+  const supported = Boolean(emojiSignature) && !placeholderSignatures.includes(emojiSignature);
+  glyphSupportCache.set(char, supported);
+  return supported;
+}
+
+function getGlyphSignature(char) {
+  if (glyphSignatureCache.has(char)) {
+    return glyphSignatureCache.get(char);
+  }
+
+  if (!glyphCanvas) {
+    glyphCanvas = document.createElement("canvas");
+    glyphCanvas.width = 80;
+    glyphCanvas.height = 80;
+    glyphContext = glyphCanvas.getContext("2d", { willReadFrequently: true });
+  }
+
+  if (!glyphContext) {
+    glyphSignatureCache.set(char, "");
+    return "";
+  }
+
+  glyphContext.clearRect(0, 0, glyphCanvas.width, glyphCanvas.height);
+  glyphContext.textBaseline = "top";
+  glyphContext.font = "64px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif";
+  glyphContext.fillText(char, 8, 8);
+
+  const { data } = glyphContext.getImageData(0, 0, glyphCanvas.width, glyphCanvas.height);
+  let pixelCount = 0;
+  let minX = glyphCanvas.width;
+  let minY = glyphCanvas.height;
+  let maxX = 0;
+  let maxY = 0;
+  let hash = 2166136261;
+
+  for (let index = 0; index < data.length; index += 4) {
+    const alpha = data[index + 3];
+    if (!alpha) {
+      continue;
+    }
+
+    const pixelIndex = index / 4;
+    const x = pixelIndex % glyphCanvas.width;
+    const y = Math.floor(pixelIndex / glyphCanvas.width);
+    pixelCount += 1;
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+
+    hash ^= data[index];
+    hash = Math.imul(hash, 16777619);
+    hash ^= data[index + 1];
+    hash = Math.imul(hash, 16777619);
+    hash ^= data[index + 2];
+    hash = Math.imul(hash, 16777619);
+    hash ^= alpha;
+    hash = Math.imul(hash, 16777619);
+  }
+
+  const signature = pixelCount
+    ? `${pixelCount}:${minX}:${minY}:${maxX}:${maxY}:${hash >>> 0}`
+    : "";
+  glyphSignatureCache.set(char, signature);
+  return signature;
 }
 
 let toastTimeout;
